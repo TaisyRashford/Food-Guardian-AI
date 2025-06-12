@@ -1,0 +1,68 @@
+import Nat "mo:base/Nat";
+import List "mo:base/List";
+import Text "mo:base/Text";
+
+actor FoodGuardianAI {
+
+  // Food item structure
+  type FoodItem = {
+    id: Nat;
+    name: Text;
+    expiryDate: Text; // ISO format: YYYY-MM-DD
+    notes: Text;
+  };
+
+  // Internal state
+  var foods : List.List<FoodItem> = List.nil();
+  var nextId : Nat = 1;
+
+  // Add a new food item
+  public func addFood(name: Text, expiryDate: Text, notes: Text) : async Nat {
+    let item : FoodItem = {
+      id = nextId;
+      name = name;
+      expiryDate = expiryDate;
+      notes = notes
+    };
+    foods := List.push(item, foods);
+    nextId += 1;
+    return item.id;
+  };
+
+  // List all food items
+  public query func listFoods() : async [FoodItem] {
+    List.toArray(foods)
+  };
+
+  // Remove a food item by id
+  public func removeFood(id: Nat) : async Bool {
+    var found = false;
+    var updatedFoods : List.List<FoodItem> = List.nil();
+    for (item in List.toArray(foods).vals()) {
+      if (item.id == id) {
+        found := true;
+      } else {
+        updatedFoods := List.push(item, updatedFoods);
+      };
+    };
+    foods := updatedFoods;
+    return found;
+  };
+
+  // Mock AI logic: Check if a food item is "safe"
+  // For demo: If expiryDate is after today, it's safe
+  public query func isFoodSafe(id: Nat, today: Text) : async ?Bool {
+    // today is expected in "YYYY-MM-DD" format
+    for (item in List.toArray(foods).vals()) {
+      if (item.id == id) {
+        if (item.expiryDate >= today) {
+          return ?true
+        } else {
+          return ?false
+        }
+      }
+    };
+    return null
+  };
+
+}
